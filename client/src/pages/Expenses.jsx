@@ -160,7 +160,15 @@ function Expenses({ isActive }) {
 
   return (
     <main className="page-shell">
-      <section className="panel">
+      <button
+        className="expense-fab"
+        type="button"
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      >
+        Add Expense
+      </button>
+
+      <section className="panel expense-form-panel">
         <form className="product-form" onSubmit={saveExpense}>
           <label>
             Title
@@ -298,6 +306,47 @@ function Expenses({ isActive }) {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="mobile-card-list expense-card-list">
+          {expenses.length === 0 ? (
+            <article className="data-card">
+              <strong>No expenses found.</strong>
+            </article>
+          ) : (
+            expenses.map((expense) => (
+              <article className="data-card" key={expense._id}>
+                <div className="card-topline">
+                  <div>
+                    <strong>{expense.title}</strong>
+                    <span>{new Date(expense.date).toLocaleDateString("en-IN")}</span>
+                  </div>
+                  <span className="payment-badge">{getPaymentLabel(expense)}</span>
+                </div>
+                <div className="data-card-row">
+                  <span>Amount</span>
+                  <strong>{formatCurrency(expense.amount)}</strong>
+                </div>
+                {expense.notes && <p className="muted">{expense.notes}</p>}
+                <div className="card-actions">
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={() => editExpense(expense)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="ghost-button danger"
+                    type="button"
+                    onClick={() => deleteExpense(expense._id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </article>
+            ))
+          )}
         </div>
       </section>
     </main>

@@ -276,6 +276,55 @@ function SalesHistory({ isActive }) {
             </tbody>
           </table>
         </div>
+
+        <div className="mobile-card-list history-card-list">
+          {sales.length === 0 ? (
+            <article className="data-card">
+              <strong>No sales found.</strong>
+            </article>
+          ) : (
+            sales.map((sale) => (
+              <article className="data-card" key={sale._id}>
+                <div className="card-topline">
+                  <div>
+                    <strong>{sale.productName}</strong>
+                    <span>{formatDate(sale.createdAt)}</span>
+                  </div>
+                  <span className="payment-badge">{sale.paymentMethod || "-"}</span>
+                </div>
+                <div className="data-card-grid">
+                  <div>
+                    <span>Size</span>
+                    <strong>{sale.size || sale.color || "-"}</strong>
+                  </div>
+                  <div>
+                    <span>Amount</span>
+                    <strong>{formatCurrency(sale.sellingPrice)}</strong>
+                  </div>
+                  <div>
+                    <span>Profit</span>
+                    <strong>{formatCurrency(sale.profit)}</strong>
+                  </div>
+                  <div>
+                    <span>Qty</span>
+                    <strong>{sale.quantity}</strong>
+                  </div>
+                </div>
+                <div className="card-actions">
+                  <button className="secondary-button" onClick={() => setSelectedSale(sale)}>
+                    View
+                  </button>
+                  <button className="secondary-button" onClick={() => openEditSale(sale)}>
+                    Edit
+                  </button>
+                  <button className="ghost-button danger" onClick={() => deleteSale(sale._id)}>
+                    Delete
+                  </button>
+                </div>
+              </article>
+            ))
+          )}
+        </div>
       </section>
 
       {selectedSale && (

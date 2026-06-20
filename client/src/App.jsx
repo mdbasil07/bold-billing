@@ -1,12 +1,22 @@
-import { useEffect, useState } from "react";
-import Dashboard from "./pages/Dashboard";
-import DailySales from "./pages/DailySales";
-import Expenses from "./pages/Expenses";
-import ImportHistory from "./pages/ImportHistory";
-import ImportStock from "./pages/ImportStock";
-import Products from "./pages/Products";
-import Reports from "./pages/Reports";
-import SalesHistory from "./pages/SalesHistory";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const DailySales = lazy(() => import("./pages/DailySales"));
+const Expenses = lazy(() => import("./pages/Expenses"));
+const ImportHistory = lazy(() => import("./pages/ImportHistory"));
+const ImportStock = lazy(() => import("./pages/ImportStock"));
+const Products = lazy(() => import("./pages/Products"));
+const Reports = lazy(() => import("./pages/Reports"));
+const SalesHistory = lazy(() => import("./pages/SalesHistory"));
+
+const primaryTabs = [
+  { id: "dashboard", label: "Dashboard", icon: "D" },
+  { id: "products", label: "Inventory", icon: "I" },
+  { id: "dailySales", label: "Daily Sales", icon: "S" },
+  { id: "salesHistory", label: "History", icon: "H" },
+  { id: "reports", label: "Reports", icon: "R" },
+  { id: "expenses", label: "Expenses", icon: "E" }
+];
 
 function App() {
   const [page, setPage] = useState("dashboard");
@@ -24,65 +34,25 @@ function App() {
     );
   };
 
+  const ActivePage = useMemo(() => {
+    const pages = {
+      dashboard: Dashboard,
+      products: Products,
+      importStock: ImportStock,
+      dailySales: DailySales,
+      salesHistory: SalesHistory,
+      expenses: Expenses,
+      reports: Reports,
+      importHistory: ImportHistory
+    };
+
+    return pages[page] || Dashboard;
+  }, [page]);
+
   return (
     <div className="app-shell" data-theme={theme}>
-      <nav className="top-nav">
-        <button
-          className={`nav-button ${page === "dashboard" ? "active" : ""}`}
-          onClick={() => setPage("dashboard")}
-        >
-          Dashboard
-        </button>
-
-        <button
-          className={`nav-button ${page === "products" ? "active" : ""}`}
-          onClick={() => setPage("products")}
-        >
-          Products
-        </button>
-
-        <button
-          className={`nav-button ${page === "importStock" ? "active" : ""}`}
-          onClick={() => setPage("importStock")}
-        >
-          Import Stock
-        </button>
-
-        <button
-          className={`nav-button ${page === "dailySales" ? "active" : ""}`}
-          onClick={() => setPage("dailySales")}
-        >
-          Daily Sales
-        </button>
-
-        <button
-          className={`nav-button ${page === "salesHistory" ? "active" : ""}`}
-          onClick={() => setPage("salesHistory")}
-        >
-          Sales History
-        </button>
-
-        <button
-          className={`nav-button ${page === "expenses" ? "active" : ""}`}
-          onClick={() => setPage("expenses")}
-        >
-          Expenses
-        </button>
-
-        <button
-          className={`nav-button ${page === "reports" ? "active" : ""}`}
-          onClick={() => setPage("reports")}
-        >
-          Reports
-        </button>
-
-        <button
-          className={`nav-button ${page === "importHistory" ? "active" : ""}`}
-          onClick={() => setPage("importHistory")}
-        >
-          Import History
-        </button>
-
+      <header className="app-header">
+        <strong>Bold Billing</strong>
         <button
           className="theme-toggle"
           onClick={toggleTheme}
@@ -91,32 +61,25 @@ function App() {
         >
           {theme === "light" ? "D" : "L"}
         </button>
-      </nav>
+      </header>
 
-      <div className="page-view" hidden={page !== "dashboard"}>
-        <Dashboard isActive={page === "dashboard"} />
-      </div>
-      <div className="page-view" hidden={page !== "products"}>
-        <Products isActive={page === "products"} />
-      </div>
-      <div className="page-view" hidden={page !== "importStock"}>
-        <ImportStock isActive={page === "importStock"} />
-      </div>
-      <div className="page-view" hidden={page !== "dailySales"}>
-        <DailySales isActive={page === "dailySales"} />
-      </div>
-      <div className="page-view" hidden={page !== "salesHistory"}>
-        <SalesHistory isActive={page === "salesHistory"} />
-      </div>
-      <div className="page-view" hidden={page !== "expenses"}>
-        <Expenses isActive={page === "expenses"} />
-      </div>
-      <div className="page-view" hidden={page !== "reports"}>
-        <Reports isActive={page === "reports"} />
-      </div>
-      <div className="page-view" hidden={page !== "importHistory"}>
-        <ImportHistory isActive={page === "importHistory"} />
-      </div>
+      <Suspense fallback={<div className="page-loader">Loading...</div>}>
+        <ActivePage isActive onNavigate={setPage} />
+      </Suspense>
+
+      <nav className="bottom-nav" aria-label="Primary navigation">
+        {primaryTabs.map((tab) => (
+          <button
+            className={`nav-button ${page === tab.id ? "active" : ""}`}
+            key={tab.id}
+            onClick={() => setPage(tab.id)}
+            type="button"
+          >
+            <span>{tab.icon}</span>
+            {tab.label}
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }

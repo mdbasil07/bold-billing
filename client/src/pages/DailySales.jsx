@@ -11,8 +11,11 @@ const formatCurrency = (value) =>
 
 const getToday = () => toDateInputValue();
 
+const createId = () =>
+  crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
 const createDraftRow = () => ({
-  id: crypto.randomUUID(),
+  id: createId(),
   productId: "",
   productQuery: "",
   quantity: "1",
@@ -220,31 +223,6 @@ function DailySales({ isActive }) {
   };
 
   useEffect(() => {
-    let ignore = false;
-
-    Promise.all([
-      api.get(`/sales?date=${selectedDate}`),
-      api.get("/products"),
-      api.get(`/expenses?startDate=${selectedDate}&endDate=${selectedDate}`),
-      api.get(`/payment-transfers?startDate=${selectedDate}&endDate=${selectedDate}`)
-    ]).then(([salesRes, productsRes, expensesRes, transferRes]) => {
-      if (!ignore) {
-        setSales(salesRes.data);
-        setProducts(productsRes.data);
-        setExpenses(expensesRes.data);
-        setPaymentTransfers(transferRes.data);
-        setTransferForm({ direction: "cash-to-gpay", amount: "", notes: "" });
-        setDraftRows([createDraftRow()]);
-        setMessage("");
-      }
-    });
-
-    return () => {
-      ignore = true;
-    };
-  }, [selectedDate]);
-
-  useEffect(() => {
     if (!isActive) {
       return undefined;
     }
@@ -262,6 +240,9 @@ function DailySales({ isActive }) {
         setProducts(productsRes.data);
         setExpenses(expensesRes.data);
         setPaymentTransfers(transferRes.data);
+        setTransferForm({ direction: "cash-to-gpay", amount: "", notes: "" });
+        setDraftRows([createDraftRow()]);
+        setMessage("");
       }
     });
 
@@ -725,6 +706,124 @@ function DailySales({ isActive }) {
     }
   };
 
+  const renderDraftCard = (row, index) => {
+    const product = getProduct(row.productId);
+    const paymentLabel = [
+      Number(row.cashAmount) > 0 ? "Cash" : null,
+      Number(row.gpayAmount) > 0 ? "GPay" : null,
+      Number(row.cardAmount) > 0 ? "Card" : null
+    ].filter(Boolean);
+
+    return (
+      <article className="sales-entry-card draft-entry-card" key={row.id}>
+        <div className="card-topline">
+          <strong>Sale #{sales.length + index + 1}</strong>
+          <span className="payment-badge">
+            {paymentLabel.length > 2 ? "Mixed" : paymentLabel.join(" + ") || "Unpaid"}
+          </span>
+        </div>
+        <div className="mobile-form-grid">
+          <label>
+            Product
+            <input
+              data-draft-product-input
+              list="daily-sales-products"
+              value={row.productQuery}
+              placeholder="Type product"
+              onChange={(e) => updateDraftRow(row.id, "productQuery", e.target.value)}
+            />
+          </label>
+          <label>
+            Color
+            <input value={product?.color || ""} readOnly />
+          </label>
+          <label>
+            Qty
+            <input
+              type="number"
+              min="1"
+              value={row.quantity}
+              onChange={(e) => updateDraftRow(row.id, "quantity", e.target.value)}
+            />
+          </label>
+          <label>
+            Purchase Price
+            <input
+              type="number"
+              min="0"
+              value={row.productId ? product?.purchasePrice || "" : row.purchasePrice}
+              readOnly={Boolean(row.productId)}
+              onChange={(e) => updateDraftRow(row.id, "purchasePrice", e.target.value)}
+            />
+          </label>
+          <label>
+            Selling Price
+            <input
+              type="number"
+              min="0"
+              value={row.sellingPrice}
+              onChange={(e) => updateDraftRow(row.id, "sellingPrice", e.target.value)}
+            />
+          </label>
+          <label>
+            Cash
+            <input
+              type="number"
+              min="0"
+              value={row.cashAmount}
+              disabled={isPaymentFieldDisabled(row, "cashAmount")}
+              onChange={(e) => updateDraftRow(row.id, "cashAmount", e.target.value)}
+            />
+          </label>
+          <label>
+            GPay
+            <input
+              type="number"
+              min="0"
+              value={row.gpayAmount}
+              disabled={isPaymentFieldDisabled(row, "gpayAmount")}
+              onChange={(e) => updateDraftRow(row.id, "gpayAmount", e.target.value)}
+            />
+          </label>
+          <label>
+            Card
+            <input
+              type="number"
+              min="0"
+              value={row.cardAmount}
+              disabled={isPaymentFieldDisabled(row, "cardAmount")}
+              onChange={(e) => updateDraftRow(row.id, "cardAmount", e.target.value)}
+            />
+          </label>
+          <label className="form-wide">
+            Notes
+            <input
+              value={row.notes}
+              onChange={(e) => updateDraftRow(row.id, "notes", e.target.value)}
+            />
+          </label>
+        </div>
+        <div className="card-actions">
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() => saveDraftSale(row.id)}
+            disabled={isSaving}
+          >
+            Save Sale
+          </button>
+          <button
+            className="ghost-button danger"
+            type="button"
+            onClick={() => removeRow(row.id)}
+          >
+            Remove
+          </button>
+        </div>
+      </article>
+    );
+  };
+
   return (
     <main className="page-shell sales-register">
       <section className="page-header register-header">
@@ -972,6 +1071,64 @@ function DailySales({ isActive }) {
               })}
             </tbody>
           </table>
+        </div>
+
+        <div className="mobile-sales-list">
+          {sales.map((sale, index) => (
+            <article className="sales-entry-card" key={sale._id}>
+              <div className="card-topline">
+                <div>
+                  <strong>#{index + 1} {sale.productName}</strong>
+                  <span>{sale.color || "-"}</span>
+                </div>
+                <span className="payment-badge">{getPaymentLabel(sale)}</span>
+              </div>
+              <div className="data-card-grid">
+                <div>
+                  <span>Qty</span>
+                  <strong>{sale.quantity}</strong>
+                </div>
+                <div>
+                  <span>Purchase</span>
+                  <strong>{formatCurrency(sale.purchasePrice)}</strong>
+                </div>
+                <div>
+                  <span>Selling</span>
+                  <strong>{formatCurrency(sale.sellingPrice)}</strong>
+                </div>
+                <div>
+                  <span>Cash</span>
+                  <strong>{formatCurrency(sale.paymentBreakdown?.cash || 0)}</strong>
+                </div>
+                <div>
+                  <span>GPay</span>
+                  <strong>{formatCurrency(sale.paymentBreakdown?.gpay || 0)}</strong>
+                </div>
+                <div>
+                  <span>Card</span>
+                  <strong>{formatCurrency(sale.paymentBreakdown?.card || 0)}</strong>
+                </div>
+              </div>
+              {sale.notes && <p className="muted">{sale.notes}</p>}
+              <div className="card-actions">
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => openEditSale(sale)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="ghost-button danger"
+                  type="button"
+                  onClick={() => deleteSavedSale(sale._id)}
+                >
+                  Delete
+                </button>
+              </div>
+            </article>
+          ))}
+          {draftRows.map(renderDraftCard)}
         </div>
       </section>
 

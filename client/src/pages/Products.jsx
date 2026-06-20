@@ -26,7 +26,7 @@ const getProductQuantity = (product) =>
   product.sizes?.reduce((sum, item) => sum + Number(item.quantity || 0), 0) ??
   0;
 
-function Products({ isActive }) {
+function Products({ isActive, onNavigate }) {
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
@@ -182,6 +182,9 @@ function Products({ isActive }) {
             <button className="secondary-button" onClick={() => editProduct(product)}>
               Edit
             </button>
+            <button className="secondary-button" onClick={() => editProduct(product)}>
+              Edit Stock
+            </button>
             <button
               className="ghost-button danger"
               onClick={() => deleteProduct(product._id)}
@@ -197,14 +200,23 @@ function Products({ isActive }) {
   return (
     <main className="page-shell">
       <section className="panel compact-panel">
-        <label>
-          Search Inventory
-          <input
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by brand, article number or color"
-          />
-        </label>
+        <div className="inventory-toolbar">
+          <label>
+            Search Inventory
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by brand, article number or color"
+            />
+          </label>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() => onNavigate?.("importStock")}
+          >
+            Import Stock
+          </button>
+        </div>
       </section>
 
       {isSearching && renderProductsGrid()}

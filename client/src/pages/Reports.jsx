@@ -259,7 +259,7 @@ function Reports({ isActive }) {
   };
 
   return (
-    <main className="page-shell">
+    <main className="page-shell reports-page">
       <section className="panel compact-panel history-filters">
         <label>
           Range
@@ -283,7 +283,7 @@ function Reports({ isActive }) {
             </label>
           </>
         )}
-        <button className="primary-button" onClick={exportPng}>
+        <button className="primary-button export-button" onClick={exportPng}>
           Export PNG
         </button>
       </section>

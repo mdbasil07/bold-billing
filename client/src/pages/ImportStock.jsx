@@ -345,85 +345,152 @@ function ImportStock({ isActive }) {
                 </span>
               </div>
             ) : (
-              <div className="table-wrap">
-                <table className="sales-table import-table">
-                  <thead>
-                    <tr>
-                      <th>Brand</th>
-                      <th>Article Number</th>
-                      <th>Color</th>
-                      <th>Purchase Price</th>
-                      <th>Quantity</th>
-                      <th>Status</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {classifiedRows.map((row) => (
-                      <tr key={row.id} className={row.errors.length ? "invalid-row" : ""}>
-                        <td>
+              <>
+                <div className="table-wrap">
+                  <table className="sales-table import-table">
+                    <thead>
+                      <tr>
+                        <th>Brand</th>
+                        <th>Article Number</th>
+                        <th>Color</th>
+                        <th>Purchase Price</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {classifiedRows.map((row) => (
+                        <tr key={row.id} className={row.errors.length ? "invalid-row" : ""}>
+                          <td>
+                            <input
+                              value={row.brand}
+                              onChange={(e) => updateRow(row.id, "brand", e.target.value)}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              value={row.articleNumber}
+                              onChange={(e) =>
+                                updateRow(row.id, "articleNumber", e.target.value)
+                              }
+                            />
+                          </td>
+                          <td>
+                            <input
+                              value={row.color}
+                              onChange={(e) => updateRow(row.id, "color", e.target.value)}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="number"
+                              min="1"
+                              step="1"
+                              value={row.purchasePrice}
+                              disabled={row.status === STATUS.exists}
+                              onChange={(e) =>
+                                updateRow(row.id, "purchasePrice", e.target.value)
+                              }
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={row.quantity}
+                              onChange={(e) =>
+                                updateRow(row.id, "quantity", e.target.value)
+                              }
+                            />
+                          </td>
+                          <td>
+                            <span className="payment-badge">{row.status}</span>
+                            {row.errors.length > 0 && (
+                              <small className="row-error">{row.errors.join(", ")}</small>
+                            )}
+                          </td>
+                          <td>
+                            <button
+                              className="ghost-button danger"
+                              type="button"
+                              onClick={() => removeRow(row.id)}
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="mobile-card-list import-card-list">
+                  {classifiedRows.map((row) => (
+                    <article className={`data-card ${row.errors.length ? "invalid-row" : ""}`} key={row.id}>
+                      <div className="card-topline">
+                        <strong>{row.brand || "New row"}</strong>
+                        <span className="payment-badge">{row.status}</span>
+                      </div>
+                      <div className="mobile-form-grid">
+                        <label>
+                          Brand
                           <input
                             value={row.brand}
                             onChange={(e) => updateRow(row.id, "brand", e.target.value)}
                           />
-                        </td>
-                        <td>
+                        </label>
+                        <label>
+                          Article Number
                           <input
                             value={row.articleNumber}
-                            onChange={(e) =>
-                              updateRow(row.id, "articleNumber", e.target.value)
-                            }
+                            onChange={(e) => updateRow(row.id, "articleNumber", e.target.value)}
                           />
-                        </td>
-                        <td>
+                        </label>
+                        <label>
+                          Color
                           <input
                             value={row.color}
                             onChange={(e) => updateRow(row.id, "color", e.target.value)}
                           />
-                        </td>
-                        <td>
+                        </label>
+                        <label>
+                          Purchase Price
                           <input
                             type="number"
                             min="1"
                             step="1"
                             value={row.purchasePrice}
                             disabled={row.status === STATUS.exists}
-                            onChange={(e) =>
-                              updateRow(row.id, "purchasePrice", e.target.value)
-                            }
+                            onChange={(e) => updateRow(row.id, "purchasePrice", e.target.value)}
                           />
-                        </td>
-                        <td>
+                        </label>
+                        <label>
+                          Quantity
                           <input
                             type="number"
                             min="0"
                             step="1"
                             value={row.quantity}
-                            onChange={(e) =>
-                              updateRow(row.id, "quantity", e.target.value)
-                            }
+                            onChange={(e) => updateRow(row.id, "quantity", e.target.value)}
                           />
-                        </td>
-                        <td>
-                          <span className="payment-badge">{row.status}</span>
-                          {row.errors.length > 0 && (
-                            <small className="row-error">{row.errors.join(", ")}</small>
-                          )}
-                        </td>
-                        <td>
-                          <button
-                            className="ghost-button danger"
-                            type="button"
-                            onClick={() => removeRow(row.id)}
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </label>
+                      </div>
+                      {row.errors.length > 0 && (
+                        <small className="row-error">{row.errors.join(", ")}</small>
+                      )}
+                      <button
+                        className="ghost-button danger"
+                        type="button"
+                        onClick={() => removeRow(row.id)}
+                      >
+                        Remove
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              </>
             )}
           </section>
 
