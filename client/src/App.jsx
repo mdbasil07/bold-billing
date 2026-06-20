@@ -9,13 +9,15 @@ const Products = lazy(() => import("./pages/Products"));
 const Reports = lazy(() => import("./pages/Reports"));
 const SalesHistory = lazy(() => import("./pages/SalesHistory"));
 
-const primaryTabs = [
-  { id: "dashboard", label: "Dashboard", icon: "D" },
-  { id: "products", label: "Inventory", icon: "I" },
-  { id: "dailySales", label: "Daily Sales", icon: "S" },
-  { id: "salesHistory", label: "History", icon: "H" },
-  { id: "reports", label: "Reports", icon: "R" },
-  { id: "expenses", label: "Expenses", icon: "E" }
+const menuTabs = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "products", label: "Products" },
+  { id: "importStock", label: "Import Stock" },
+  { id: "dailySales", label: "Daily Sales" },
+  { id: "salesHistory", label: "Sales History" },
+  { id: "expenses", label: "Expenses" },
+  { id: "reports", label: "Reports" },
+  { id: "importHistory", label: "Import History" }
 ];
 
 function App() {
@@ -52,34 +54,43 @@ function App() {
   return (
     <div className="app-shell" data-theme={theme}>
       <header className="app-header">
-        <strong>Bold Billing</strong>
-        <button
-          className="theme-toggle"
-          onClick={toggleTheme}
-          aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
-          title={theme === "light" ? "Dark mode" : "Light mode"}
-        >
-          {theme === "light" ? "D" : "L"}
-        </button>
+        <nav className="top-nav" aria-label="Primary navigation">
+          {menuTabs.map((tab) => (
+            <button
+              className={`nav-button ${page === tab.id ? "active" : ""}`}
+              key={tab.id}
+              onClick={() => setPage(tab.id)}
+              type="button"
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+        <div className="header-actions">
+          <label className="mobile-page-menu">
+            Menu
+            <select value={page} onChange={(e) => setPage(e.target.value)}>
+              {menuTabs.map((tab) => (
+                <option key={tab.id} value={tab.id}>
+                  {tab.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+            title={theme === "light" ? "Dark mode" : "Light mode"}
+          >
+            {theme === "light" ? "D" : "L"}
+          </button>
+        </div>
       </header>
 
       <Suspense fallback={<div className="page-loader">Loading...</div>}>
         <ActivePage isActive onNavigate={setPage} />
       </Suspense>
-
-      <nav className="bottom-nav" aria-label="Primary navigation">
-        {primaryTabs.map((tab) => (
-          <button
-            className={`nav-button ${page === tab.id ? "active" : ""}`}
-            key={tab.id}
-            onClick={() => setPage(tab.id)}
-            type="button"
-          >
-            <span>{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
-      </nav>
     </div>
   );
 }
