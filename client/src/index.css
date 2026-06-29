@@ -127,6 +127,7 @@ h2 {
   min-height: 100vh;
   color: var(--text);
   background: var(--bg);
+  padding-top: 72px;
 }
 
 .page-view[hidden] {
@@ -134,8 +135,10 @@ h2 {
 }
 
 .app-header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 10;
   display: flex;
   align-items: center;
@@ -146,6 +149,14 @@ h2 {
   background: var(--nav-bg);
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(12px);
+  transform: translateY(0);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+  will-change: transform;
+}
+
+.app-header.is-hidden {
+  pointer-events: none;
+  transform: translateY(-110%);
 }
 
 .header-actions {
@@ -1398,6 +1409,10 @@ h2 {
 }
 
 @media (max-width: 767px) {
+  .app-shell {
+    padding-top: 62px;
+  }
+
   .app-header {
     min-height: 54px;
     padding: 8px 12px;

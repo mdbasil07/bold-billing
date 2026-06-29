@@ -22,6 +22,7 @@ const menuTabs = [
 
 function App() {
   const [page, setPage] = useState("dashboard");
+  const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const [theme, setTheme] = useState(() =>
     localStorage.getItem("boldBillingTheme") || "light"
   );
@@ -29,6 +30,28 @@ function App() {
   useEffect(() => {
     localStorage.setItem("boldBillingTheme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDistance = Math.abs(currentScrollY - lastScrollY);
+
+      if (scrollDistance > 4) {
+        const isScrollingDown = currentScrollY > lastScrollY;
+        setIsHeaderHidden(isScrollingDown && currentScrollY > 80);
+      }
+
+      lastScrollY = Math.max(currentScrollY, 0);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   const toggleTheme = () => {
     setTheme((currentTheme) =>
@@ -53,13 +76,16 @@ function App() {
 
   return (
     <div className="app-shell" data-theme={theme}>
-      <header className="app-header">
+      <header className={`app-header ${isHeaderHidden ? "is-hidden" : ""}`}>
         <nav className="top-nav" aria-label="Primary navigation">
           {menuTabs.map((tab) => (
             <button
               className={`nav-button ${page === tab.id ? "active" : ""}`}
               key={tab.id}
-              onClick={() => setPage(tab.id)}
+              onClick={() => {
+                setPage(tab.id);
+                setIsHeaderHidden(false);
+              }}
               type="button"
             >
               {tab.label}
@@ -69,7 +95,13 @@ function App() {
         <div className="header-actions">
           <label className="mobile-page-menu">
             Menu
-            <select value={page} onChange={(e) => setPage(e.target.value)}>
+            <select
+              value={page}
+              onChange={(e) => {
+                setPage(e.target.value);
+                setIsHeaderHidden(false);
+              }}
+            >
               {menuTabs.map((tab) => (
                 <option key={tab.id} value={tab.id}>
                   {tab.label}

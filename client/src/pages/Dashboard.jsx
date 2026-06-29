@@ -21,8 +21,7 @@ function Dashboard({ isActive }) {
     todayExpenses: 0,
     todayNetProfit: 0,
     todayPairsSold: 0,
-    brandStockSummary: [],
-    lowStockProducts: []
+    brandStockSummary: []
   });
 
   useEffect(() => {
@@ -46,8 +45,7 @@ function Dashboard({ isActive }) {
           todayExpenses: res.data.todayExpenses || 0,
           todayNetProfit: res.data.todayNetProfit || 0,
           todayPairsSold: res.data.todayPairsSold || 0,
-          brandStockSummary: res.data.brandStockSummary || [],
-          lowStockProducts: res.data.lowStockProducts || []
+          brandStockSummary: res.data.brandStockSummary || []
         });
       }
     });
@@ -82,11 +80,6 @@ function Dashboard({ isActive }) {
       label: "Stock Value",
       value: formatCurrency(data.totalStockValue),
       tone: "blue"
-    },
-    {
-      label: "Low Stock",
-      value: data.lowStockProducts.length,
-      tone: "red"
     }
   ];
 
@@ -162,32 +155,6 @@ function Dashboard({ isActive }) {
             <strong>{data.totalProducts}</strong>
           </div>
         </article>
-      </section>
-
-      <section className="dashboard-panel low-stock-panel">
-        <div className="section-heading">
-          <h2>Low Stock</h2>
-          <span className="summary-pill">{data.lowStockProducts.length} items</span>
-        </div>
-        <div className="mobile-card-list always-grid">
-          {data.lowStockProducts.length === 0 ? (
-            <article className="data-card">
-              <strong>Stock looks clear</strong>
-              <span>No products are at or below the low-stock threshold.</span>
-            </article>
-          ) : (
-            data.lowStockProducts.map((product) => (
-              <article className="data-card" key={product._id}>
-                <strong>{product.name}</strong>
-                <span>{product.color || "-"}</span>
-                <div className="data-card-row">
-                  <span>Remaining</span>
-                  <strong>{product.quantity}</strong>
-                </div>
-              </article>
-            ))
-          )}
-        </div>
       </section>
 
       <section className="dashboard-panel brand-stock-panel">
