@@ -31,6 +31,7 @@ lerna-debug.log*
 *.local
 *.traineddata
 server/*.traineddata
+.chrome-mobile-verify/
 
 # OS and editor files
 .DS_Store
