@@ -289,6 +289,139 @@ h2 {
   margin-top: 18px;
 }
 
+.expense-title-box {
+  position: relative;
+}
+
+.expense-suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 8px;
+  box-shadow: var(--shadow);
+}
+
+.expense-suggestions button {
+  min-height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-strong);
+  background: var(--surface-soft);
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.expense-suggestions button.active,
+.expense-suggestions button:hover {
+  border-color: var(--primary);
+  color: #fff;
+  background: var(--primary);
+}
+
+.tracked-expense-panel .section-heading {
+  margin-bottom: 14px;
+}
+
+.tracked-expense-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.tracked-expense-grid article {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  padding: 12px;
+}
+
+.tracked-expense-grid span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.tracked-expense-grid strong {
+  color: var(--text-strong);
+  font-size: 18px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.other-expense-box {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  margin-top: 12px;
+  padding: 14px;
+}
+
+.other-expense-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.other-expense-heading h3 {
+  color: var(--text-strong);
+  font-size: 18px;
+}
+
+.other-expense-heading strong {
+  color: var(--text-strong);
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+
+.other-expense-list {
+  display: grid;
+  gap: 8px;
+}
+
+.other-expense-list article {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 10px;
+}
+
+.other-expense-list span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.other-expense-list strong,
+.other-expense-list b {
+  color: var(--text-strong);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.other-expense-list b {
+  text-align: right;
+}
+
 .form-wide,
 .manual-size-box,
 .size-preview,
@@ -428,9 +561,19 @@ h2 {
   margin-top: 5px;
 }
 
+.card-topline > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
 .card-topline strong {
   color: var(--text-strong);
   white-space: nowrap;
+}
+
+.card-topline span {
+  color: var(--text);
 }
 
 .sizes-list {
@@ -1319,6 +1462,7 @@ h2 {
   .debug-grid,
   .register-form,
   .register-totals,
+  .other-expense-list article,
   .transfer-form,
   .transfer-list article {
     grid-template-columns: 1fr;
@@ -1345,6 +1489,15 @@ h2 {
   .history-filters label,
   .history-filters .primary-button {
     width: 100%;
+    min-width: 0;
+  }
+
+  .tracked-expense-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .other-expense-list b {
+    text-align: left;
   }
 
   .size-row,
@@ -1451,6 +1604,10 @@ h2 {
     padding: 16px 0 36px;
   }
 
+  .expenses-page {
+    padding-bottom: calc(108px + env(safe-area-inset-bottom));
+  }
+
   h1 {
     font-size: 28px;
   }
@@ -1524,6 +1681,7 @@ h2 {
   .import-summary,
   .debug-grid,
   .register-totals,
+  .other-expense-list article,
   .products-grid {
     grid-template-columns: 1fr;
   }
@@ -1671,6 +1829,29 @@ h2 {
   .secondary-button,
   .ghost-button {
     min-height: 44px;
+  }
+
+  .tracked-expense-panel .history-filters {
+    gap: 10px;
+  }
+
+  .tracked-expense-grid {
+    gap: 8px;
+  }
+
+  .tracked-expense-grid article,
+  .other-expense-box {
+    padding: 10px;
+  }
+
+  .tracked-expense-grid strong {
+    font-size: 16px;
+  }
+
+  .other-expense-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
   }
 }
 

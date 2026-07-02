@@ -24,40 +24,33 @@ const formatFileDate = (value) =>
     month: "long"
   });
 
-const getRange = (mode, customStart, customEnd) => {
+const getSelectedDate = (mode, customDate) => {
   const now = new Date();
-  const end = today();
 
   if (mode === "today") {
-    return { startDate: end, endDate: end };
+    return today();
   }
 
   if (mode === "yesterday") {
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
-    const yesterdayValue = toDateInputValue(yesterday);
 
-    return { startDate: yesterdayValue, endDate: yesterdayValue };
+    return toDateInputValue(yesterday);
   }
 
-  if (mode === "week") {
-    const start = new Date(now);
-    start.setDate(now.getDate() - now.getDay());
-    return { startDate: toDateInputValue(start), endDate: end };
+  if (mode === "dayBeforeYesterday") {
+    const dayBeforeYesterday = new Date(now);
+    dayBeforeYesterday.setDate(now.getDate() - 2);
+
+    return toDateInputValue(dayBeforeYesterday);
   }
 
-  if (mode === "month") {
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    return { startDate: toDateInputValue(start), endDate: end };
-  }
-
-  return { startDate: customStart, endDate: customEnd };
+  return customDate;
 };
 
 function Reports({ isActive }) {
   const [mode, setMode] = useState("today");
-  const [startDate, setStartDate] = useState(today());
-  const [endDate, setEndDate] = useState(today());
+  const [selectedDate, setSelectedDate] = useState(today());
   const [data, setData] = useState({
     totalSales: 0,
     totalProfit: 0,
@@ -81,8 +74,11 @@ function Reports({ isActive }) {
     }
 
     let ignore = false;
-    const range = getRange(mode, startDate, endDate);
-    const params = new URLSearchParams(range);
+    const reportDate = getSelectedDate(mode, selectedDate);
+    const params = new URLSearchParams({
+      startDate: reportDate,
+      endDate: reportDate
+    });
 
     api.get(`/reports?${params.toString()}`).then((res) => {
       if (!ignore) {
@@ -93,30 +89,18 @@ function Reports({ isActive }) {
     return () => {
       ignore = true;
     };
-  }, [isActive, mode, startDate, endDate]);
+  }, [isActive, mode, selectedDate]);
 
   const getReportTitle = () => {
-    const range = getRange(mode, startDate, endDate);
+    const reportDate = getSelectedDate(mode, selectedDate);
 
-    if (range.startDate === range.endDate) {
-      return formatDate(`${range.startDate}T12:00:00.000`);
-    }
-
-    return `${formatDate(`${range.startDate}T12:00:00.000`)} - ${formatDate(
-      `${range.endDate}T12:00:00.000`
-    )}`;
+    return formatDate(`${reportDate}T12:00:00.000`);
   };
 
   const getReportFilename = () => {
-    const range = getRange(mode, startDate, endDate);
+    const reportDate = getSelectedDate(mode, selectedDate);
 
-    if (range.startDate === range.endDate) {
-      return `Bold-${formatFileDate(range.startDate)}.png`;
-    }
-
-    return `Bold-${formatFileDate(range.startDate)} to ${formatFileDate(
-      range.endDate
-    )}.png`;
+    return `Bold-${formatFileDate(reportDate)}.png`;
   };
 
   const exportPng = async () => {
@@ -262,26 +246,19 @@ function Reports({ isActive }) {
     <main className="page-shell reports-page">
       <section className="panel compact-panel history-filters">
         <label>
-          Range
+          Date
           <select value={mode} onChange={(e) => setMode(e.target.value)}>
             <option value="today">Today</option>
             <option value="yesterday">Yesterday</option>
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-            <option value="custom">Custom Range</option>
+            <option value="dayBeforeYesterday">Day before yesterday</option>
+            <option value="custom">Select date</option>
           </select>
         </label>
         {mode === "custom" && (
-          <>
-            <label>
-              From
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-            </label>
-            <label>
-              To
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-            </label>
-          </>
+          <label>
+            Select date
+            <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
+          </label>
         )}
         <button className="primary-button export-button" onClick={exportPng}>
           Export PNG

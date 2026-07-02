@@ -4,6 +4,8 @@ import { toDateInputValue } from "../utils/date";
 
 const today = () => toDateInputValue();
 
+const COMMON_EXPENSES = ["RZ", "CHIT", "SA", "BASHA", "AM", "TEA", "RB", "SUB", "JUNAID"];
+
 const formatCurrency = (value) =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -11,14 +13,15 @@ const formatCurrency = (value) =>
     maximumFractionDigits: 0
   }).format(Number(value) || 0);
 
-const createExpenseForm = () => ({
+const createExpenseForm = (date = today()) => ({
   title: "",
   amount: "",
-  date: today(),
+  date,
   paymentMethod: "cash",
   cashAmount: "",
   gpayAmount: "",
-  notes: ""
+  notes: "",
+  trackedExpenseKey: ""
 });
 
 const getExpenseBreakdown = (expense) => {
@@ -51,18 +54,69 @@ const formatDateInput = (value) => toDateInputValue(value);
 
 function Expenses({ isActive }) {
   const [expenses, setExpenses] = useState([]);
+  const [trackedExpenses, setTrackedExpenses] = useState([]);
   const [form, setForm] = useState(createExpenseForm());
   const [editingExpense, setEditingExpense] = useState(null);
+  const [trackingStartDate, setTrackingStartDate] = useState(today());
+  const [trackingEndDate, setTrackingEndDate] = useState(today());
+  const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
   const [message, setMessage] = useState("");
+
+  const expenseSuggestions = useMemo(() => {
+    const query = form.title.trim().toUpperCase();
+
+    if (!query || form.trackedExpenseKey) {
+      return [];
+    }
+
+    return COMMON_EXPENSES.filter((expenseKey) => expenseKey.startsWith(query));
+  }, [form.title, form.trackedExpenseKey]);
+
+  const activeSuggestionIndex = expenseSuggestions.length
+    ? Math.min(Math.max(highlightedSuggestionIndex, 0), expenseSuggestions.length - 1)
+    : -1;
 
   const totalExpense = useMemo(
     () => expenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0),
     [expenses]
   );
 
+  const trackedExpenseTotals = useMemo(() => {
+    const totals = COMMON_EXPENSES.map((expenseKey) => ({
+      key: expenseKey,
+      amount: trackedExpenses
+        .filter((expense) => expense.trackedExpenseKey === expenseKey)
+        .reduce((sum, expense) => sum + Number(expense.amount || 0), 0)
+    }));
+
+    return totals;
+  }, [trackedExpenses]);
+
+  const otherTrackedRangeExpenses = useMemo(
+    () => trackedExpenses.filter((expense) => !expense.trackedExpenseKey),
+    [trackedExpenses]
+  );
+
+  const otherTrackedRangeTotal = useMemo(
+    () =>
+      otherTrackedRangeExpenses.reduce(
+        (sum, expense) => sum + Number(expense.amount || 0),
+        0
+      ),
+    [otherTrackedRangeExpenses]
+  );
+
   const fetchExpenses = async (date = form.date) => {
     const res = await api.get(`/expenses?startDate=${date}&endDate=${date}`);
     setExpenses(res.data);
+  };
+
+  const fetchTrackedExpenses = async (
+    startDate = trackingStartDate,
+    endDate = trackingEndDate
+  ) => {
+    const res = await api.get(`/expenses?startDate=${startDate}&endDate=${endDate}`);
+    setTrackedExpenses(res.data);
   };
 
   useEffect(() => {
@@ -83,6 +137,26 @@ function Expenses({ isActive }) {
     };
   }, [isActive, form.date]);
 
+  useEffect(() => {
+    if (!isActive) {
+      return undefined;
+    }
+
+    let ignore = false;
+
+    api
+      .get(`/expenses?startDate=${trackingStartDate}&endDate=${trackingEndDate}`)
+      .then((res) => {
+        if (!ignore) {
+          setTrackedExpenses(res.data);
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [isActive, trackingStartDate, trackingEndDate]);
+
   const saveExpense = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -93,6 +167,7 @@ function Expenses({ isActive }) {
       date: form.date,
       paymentMethod: form.paymentMethod,
       notes: form.notes,
+      trackedExpenseKey: form.trackedExpenseKey,
       paymentBreakdown:
         form.paymentMethod === "split"
           ? {
@@ -111,11 +186,13 @@ function Expenses({ isActive }) {
         setMessage("Expense added.");
       }
 
-      const nextForm = createExpenseForm();
+      const savedDate = form.date;
+      const nextForm = createExpenseForm(savedDate);
 
       setForm(nextForm);
       setEditingExpense(null);
-      fetchExpenses(nextForm.date);
+      await fetchExpenses(savedDate);
+      await fetchTrackedExpenses();
     } catch (error) {
       setMessage(error.response?.data?.message || "Unable to save expense.");
     }
@@ -138,9 +215,51 @@ function Expenses({ isActive }) {
       paymentMethod,
       cashAmount: String(breakdown.cash || ""),
       gpayAmount: String(breakdown.gpay || ""),
-      notes: expense.notes || ""
+      notes: expense.notes || "",
+      trackedExpenseKey: expense.trackedExpenseKey || ""
     });
     setMessage("");
+  };
+
+  const selectTrackedExpense = (expenseKey) => {
+    setForm({
+      ...form,
+      title: expenseKey,
+      trackedExpenseKey: expenseKey
+    });
+    setHighlightedSuggestionIndex(-1);
+  };
+
+  const handleTitleKeyDown = (e) => {
+    if (!expenseSuggestions.length) {
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedSuggestionIndex((currentIndex) =>
+        currentIndex >= expenseSuggestions.length - 1 ? 0 : currentIndex + 1
+      );
+      return;
+    }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedSuggestionIndex((currentIndex) =>
+        currentIndex <= 0 ? expenseSuggestions.length - 1 : currentIndex - 1
+      );
+      return;
+    }
+
+    if (e.key === "Enter" && activeSuggestionIndex >= 0) {
+      e.preventDefault();
+      selectTrackedExpense(expenseSuggestions[activeSuggestionIndex]);
+      return;
+    }
+
+    if (e.key === "Escape") {
+      setHighlightedSuggestionIndex(-1);
+    }
   };
 
   const cancelEdit = () => {
@@ -155,11 +274,12 @@ function Expenses({ isActive }) {
     }
 
     await api.delete(`/expenses/${id}`);
-    fetchExpenses();
+    await fetchExpenses();
+    await fetchTrackedExpenses();
   };
 
   return (
-    <main className="page-shell">
+    <main className="page-shell expenses-page">
       <button
         className="expense-fab"
         type="button"
@@ -172,11 +292,37 @@ function Expenses({ isActive }) {
         <form className="product-form" onSubmit={saveExpense}>
           <label>
             Title
-            <input
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              required
-            />
+            <div className="expense-title-box">
+              <input
+                value={form.title}
+                onChange={(e) => {
+                  setForm({
+                    ...form,
+                    title: e.target.value,
+                    trackedExpenseKey: ""
+                  });
+                  setHighlightedSuggestionIndex(0);
+                }}
+                onKeyDown={handleTitleKeyDown}
+                required
+              />
+              {expenseSuggestions.length > 0 && (
+                <div className="expense-suggestions">
+                  {expenseSuggestions.map((expenseKey, index) => (
+                    <button
+                      className={
+                        index === activeSuggestionIndex ? "active" : undefined
+                      }
+                      key={expenseKey}
+                      type="button"
+                      onClick={() => selectTrackedExpense(expenseKey)}
+                    >
+                      {expenseKey}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </label>
           <label>
             Amount
@@ -346,6 +492,60 @@ function Expenses({ isActive }) {
                 </div>
               </article>
             ))
+          )}
+        </div>
+      </section>
+
+      <section className="panel tracked-expense-panel">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">Tracked Expenses</span>
+            <h2>Common expense totals</h2>
+          </div>
+        </div>
+        <div className="history-filters">
+          <label>
+            From
+            <input
+              type="date"
+              value={trackingStartDate}
+              onChange={(e) => setTrackingStartDate(e.target.value)}
+            />
+          </label>
+          <label>
+            To
+            <input
+              type="date"
+              value={trackingEndDate}
+              onChange={(e) => setTrackingEndDate(e.target.value)}
+            />
+          </label>
+        </div>
+        <div className="tracked-expense-grid">
+          {trackedExpenseTotals.map((expense) => (
+            <article key={expense.key}>
+              <span>{expense.key}</span>
+              <strong>{formatCurrency(expense.amount)}</strong>
+            </article>
+          ))}
+        </div>
+        <div className="other-expense-box">
+          <div className="other-expense-heading">
+            <h3>Other Expenses</h3>
+            <strong>{formatCurrency(otherTrackedRangeTotal)}</strong>
+          </div>
+          {otherTrackedRangeExpenses.length === 0 ? (
+            <p className="muted">No other expenses found.</p>
+          ) : (
+            <div className="other-expense-list">
+              {otherTrackedRangeExpenses.map((expense) => (
+                <article key={expense._id}>
+                  <span>{new Date(expense.date).toLocaleDateString("en-IN")}</span>
+                  <strong>{expense.title}</strong>
+                  <b>{formatCurrency(expense.amount)}</b>
+                </article>
+              ))}
+            </div>
           )}
         </div>
       </section>

@@ -3,6 +3,8 @@ const router = express.Router();
 
 const Expense = require("../models/Expense");
 
+const COMMON_EXPENSE_KEYS = ["RZ", "CHIT", "SA", "BASHA", "AM", "TEA", "RB", "SUB", "JUNAID"];
+
 const getExpensePaymentDetails = ({ amount, paymentMethod = "cash", paymentBreakdown }) => {
   const expenseAmount = Number(amount);
   const normalizedPaymentMethod = String(paymentMethod).toLowerCase();
@@ -43,8 +45,9 @@ const getExpensePaymentDetails = ({ amount, paymentMethod = "cash", paymentBreak
 };
 
 const getExpensePayload = (reqBody) => {
-  const { title, amount, date, notes = "" } = reqBody;
+  const { title, amount, date, notes = "", trackedExpenseKey = "" } = reqBody;
   const expenseAmount = Number(amount);
+  const normalizedTrackedExpenseKey = String(trackedExpenseKey).trim().toUpperCase();
 
   if (!title?.trim()) {
     return { error: "Expense title is required" };
@@ -58,6 +61,13 @@ const getExpensePayload = (reqBody) => {
     return { error: "Expense date is required" };
   }
 
+  if (
+    normalizedTrackedExpenseKey &&
+    !COMMON_EXPENSE_KEYS.includes(normalizedTrackedExpenseKey)
+  ) {
+    return { error: "Tracked expense is invalid" };
+  }
+
   const paymentDetails = getExpensePaymentDetails(reqBody);
 
   if (paymentDetails.error) {
@@ -69,6 +79,7 @@ const getExpensePayload = (reqBody) => {
     amount: expenseAmount,
     date: new Date(`${date}T12:00:00.000`),
     notes,
+    trackedExpenseKey: normalizedTrackedExpenseKey,
     ...paymentDetails
   };
 };

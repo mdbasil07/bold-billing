@@ -42,6 +42,12 @@ const expenseSchema = new mongoose.Schema({
     type: String,
     default: "",
     trim: true
+  },
+
+  trackedExpenseKey: {
+    type: String,
+    default: "",
+    trim: true
   }
 }, {
   timestamps: true
